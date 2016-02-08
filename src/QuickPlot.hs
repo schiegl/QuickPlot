@@ -19,8 +19,8 @@ import Control.Concurrent
 import System.IO.Unsafe
 import Control.Exception
 import Control.Monad
-import Data.Aeson
-import Data.Aeson.QQ
+import Data.Aeson (ToJSON, encode)
+import QuickPlot.QQ
 
 
 -- | Run default QuickPlot server in background as a new process
@@ -95,7 +95,7 @@ sendMessage :: (ToJSON json)
             -> json   -- Message content
             -> IO ()
 sendMessage library procedure content = sendRawMessage (encode value)
-    where value = [aesonQQ|
+    where value = [json|
                     {
                         library   : #{ library   },
                         procedure : #{ procedure },

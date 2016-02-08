@@ -15,15 +15,22 @@ library
   hs-source-dirs:      src
   exposed-modules:     QuickPlot
                      , QuickPlot.Plotly
+                     , QuickPlot.QQ
+                     , QuickPlot.QQParser
   default-language:    Haskell2010
   -- ghc-options:         -Wall
   build-depends:       base >= 4.7 && < 5
                      , aeson
-                     , aeson-qq
                      , bytestring
+                     , text
                      , colour
                      , snap
                      , snap-core
                      , websockets-snap
                      , websockets
                      , vector
+                     , scientific
+                     , attoparsec
+                     , parsec
+                     , template-haskell
+                     , haskell-src-meta
