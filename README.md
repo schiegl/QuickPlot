@@ -3,7 +3,7 @@ QuickPlot
 
 Quick and easy data visualizations with Haskell
 
-![QuickPlot Demo][QuickPlotDemo.gif?raw=true]
+![QuickPlot Demo](https://raw.githubusercontent.com/tepf/QuickPlot/master/QuickPlotDemo.gif)
 
 How does it work?
 ----------------
