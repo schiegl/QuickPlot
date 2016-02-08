@@ -1,0 +1,29 @@
+name:                QuickPlot
+version:             0.1.0.0
+synopsis:            Quick and easy data visualization with Haskell
+description:         Please see README.md
+homepage:            http://github.com/tepf/QuickPlot#readme
+license:             GPLv3
+license-file:        LICENSE
+author:              tepf
+maintainer:          tepf@tutanota.com
+category:            Graphics
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     QuickPlot
+                     , QuickPlot.Plotly
+  default-language:    Haskell2010
+  -- ghc-options:         -Wall
+  build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , aeson-qq
+                     , bytestring
+                     , colour
+                     , snap
+                     , snap-core
+                     , websockets-snap
+                     , websockets
+                     , vector
