@@ -1,8 +1,6 @@
--- TODO: Check with license of author
-
 {-# LANGUAGE TemplateHaskell #-}
 
-module QuickPlot.QQ (
+module QuickPlot.IPC.QQ (
     json
 ) where
 
@@ -11,7 +9,7 @@ import           Language.Haskell.TH.Quote
 import qualified Data.Vector as V
 import qualified Data.Text as T
 import           Data.Aeson hiding (parseJSON, json)
-import           QuickPlot.QQParser
+import           QuickPlot.IPC.QQParser
 
 json :: QuasiQuoter
 json = QuasiQuoter { quoteExp  = jsonExp
@@ -24,7 +22,7 @@ json = QuasiQuoter { quoteExp  = jsonExp
 jsonExp :: String -> ExpQ
 jsonExp string =
     case parsed of
-        Left err  -> error $ "Error in aesonExp: " ++ show err
+        Left err  -> error $ "JSON is invalid: " ++ show err
         Right val -> toExp val
     where parsed = parseJSON string
 

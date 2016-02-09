@@ -1,104 +1,90 @@
--- TODO: If browser refreshes the websocket connection doesn't close
---          then 2 threads read from the channel and only every second message arrives
-
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module QuickPlot (
-    runQuickPlot,
-    runQuickPlotWith,
-    sendMessage
+      module QuickPlot.IPC.QQ
+    , runQuickPlot
+    , runQuickPlotWith
+    , Plottable (..)
+    , plot
+    , clear
 ) where
 
-import Network.WebSockets.Snap
-import Network.WebSockets
-import Data.ByteString.Lazy.Internal
-import Snap
-import Snap.Util.FileServe
-import Control.Concurrent
-import System.IO.Unsafe
-import Control.Exception
-import Control.Monad
-import Data.Aeson (ToJSON, encode)
-import QuickPlot.QQ
+import QuickPlot.IPC.Server
+import QuickPlot.IPC.QQ
+import Data.Aeson hiding (toJSON, json)
+import Data.Vector
+import QuickPlot.IPC.Protocol
 
 
--- | Run default QuickPlot server in background as a new process
--- Start only once (even after reloading in ghci)
--- Serves at "http://localhost:8000"
-runQuickPlot :: IO ()
-runQuickPlot = runQuickPlotWith "src/frontend"
+-- | Port the QuickPlot server is supposed to use
+type Port = Int
+-- | Directory path of the QuickPlot client files
+type CustomDirectory = FilePath
 
 
--- | Run QuickPlot server in background as a new process
--- Start only once (even after reloading in ghci)
--- Serves at "http://localhost:8000"
-runQuickPlotWith :: FilePath -- Path to directory of files to serve
+-- TODO: Print to console where QuickPlot can be found
+-- TODO: Load scripts from custom directory into the real index.html
+-- | Start a QuickPlot server
+-- Run this function only once in a ghci session (even after reload)
+runQuickPlotWith :: CustomDirectory
+                 -> Port
                  -> IO ()
-runQuickPlotWith staticDir = do
-    _ <- forkIO $ httpServe config (service staticDir)
-    return ()
-    where config = setErrorLog ConfigNoLog $
-                   setAccessLog ConfigNoLog
-                   defaultConfig
+runQuickPlotWith = runServer
 
 
--- | Declare the routing and the services of the server
-service :: FilePath -- Path to directory of files to serve
-        -> Snap ()
-service staticDir = route [ ("/", serveDirectory staticDir)
-                          , ("/ws", runWebSocketsSnap wsHandler)
-                          , ("", serveFile "src/404.html")
-                          ]
+-- | Start a QuickPlot server at "http://localhost:8000"
+-- Run this function only once in a ghci session (even after reload)
+runQuickPlot :: IO ()
+runQuickPlot = runQuickPlotWith "" 8000
 
 
--- | Handle connection exceptions of the websocket
--- TODO: Clean up instead of just messaging
-close :: ConnectionException
-      -> IO ()
-close (CloseRequest _ _) = print "Exception: CloseRequest"
-close ConnectionClosed   = print "Exception: ConnectionClosed"
-close exception          = print $ "Exception: " ++ show exception
+
+-- | Remove all plots in the browser
+-- If the browser is not connected by now the behaviour is undefined
+clear :: IO ()
+clear = sendMessage (QPMessage QuickPlot Clear Null)
 
 
--- | Handle new websocket connections
--- Send content of channel to browser and clear channel afterwards
-wsHandler :: PendingConnection
-          -> IO ()
-wsHandler pending = do
-    connection <- acceptRequest pending
-    forkPingThread connection 20 -- keep alive (every 30 seconds)
-    print "Browser connected" -- DEBUG
-    handle close $ forever $ do
-        msg <- takeMVar channel
-        sendTextData connection msg
-        threadDelay 500000
+-- | Show plottable data on the browser via plotly
+-- If the browser is not connected by now the behaviour is undefined
+plot :: (Plottable p)
+     => p
+     -> IO ()
+plot content = sendMessage (QPMessage (getLibrary content) NewPlot (toJSON content))
 
 
--- | Contains messages for the browser
-channel :: MVar ByteString
-{-# NOINLINE channel #-}
-channel = unsafePerformIO newEmptyMVar
 
+-- The reason why I didn't just use ToJSON is because it is defined for values that plotly can't interpret
+-- I kept the name "toJSON" though for clarity reasons and assume that people will use the quasi-quotes
+-- and don't parse JSON themselves. But I might change my mind.
 
--- | Send a raw message to the browser
--- By setting the mvar which the server reads from for new messages
-sendRawMessage :: ByteString -> IO ()
-sendRawMessage = putMVar channel
+class Plottable a where
+    toJSON :: a -> Value
+    getLibrary :: a -> Library
 
+instance (Num x, ToJSON x) => Plottable [x] where
+    toJSON xs = [json| { data : [{ x : #{ xs } }] } |]
+    getLibrary xs = Plotly
 
--- | Send a message to the browser
--- The browser should already be connected otherwise nothing will happen
-sendMessage :: (ToJSON json)
-            => String -- Library name
-            -> String -- Procedure name
-            -> json   -- Message content
-            -> IO ()
-sendMessage library procedure content = sendRawMessage (encode value)
-    where value = [json|
-                    {
-                        library   : #{ library   },
-                        procedure : #{ procedure },
-                        content   : #{ content   }
-                    }
-                  |]
+instance (Num x, ToJSON x) => Plottable (Vector x) where
+    toJSON xs = [json| { data : [{ x : #{ xs } }] } |]
+    getLibrary xs = Plotly
+
+instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable ([x],[y]) where
+    toJSON (xs, ys) = [json| { data : [{ x : #{ xs }, y : #{ ys } }] } |]
+    getLibrary (xs, ys) = Plotly
+
+instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable (Vector x, Vector y) where
+    toJSON (xs, ys) = [json| { data : [{ x : #{ xs }, y : #{ ys } }] } |]
+    getLibrary (xs, ys) = Plotly
+
+-- TODO: To: Future me or stranger
+--       Message: Think of a way to not have JSON values by default plotted by plotly
+instance Plottable Value where
+    toJSON v = [json| { data : [ #{ v } ] } |]
+    getLibrary v = Plotly
+
+instance Plottable [Value] where
+    toJSON v = [json| { data : #{ v } } |]
+    getLibrary v = Plotly

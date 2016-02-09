@@ -1,4 +1,4 @@
-module QuickPlot.QQParser (
+module QuickPlot.IPC.QQParser (
       JsonValue (..)
     , HashKey (..)
     , parseJSON
@@ -12,8 +12,6 @@ import qualified Data.Attoparsec.Text as A
 import           Data.Scientific (Scientific)
 import qualified Data.Text as T
 
-parseJSON :: String -> Either ParseError JsonValue
-parseJSON = parse (jpValue <* eof) "txt"
 
 data JsonValue = JsonNull
                | JsonString String
@@ -27,6 +25,11 @@ data JsonValue = JsonNull
 data HashKey = HashVarKey String
              | HashStringKey String
              deriving (Eq, Show)
+
+
+
+parseJSON :: String -> Either ParseError JsonValue
+parseJSON = parse (jpValue <* eof) "txt"
 
 type JsonParser = Parser JsonValue
 

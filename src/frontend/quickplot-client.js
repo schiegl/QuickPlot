@@ -1,13 +1,54 @@
 "use strict";
 
+/**************************************************************************************/
+/* Connectivity                                                                    */
+/**************************************************************************************/
+
 var websocketURL = "ws://127.0.0.1:8000/ws";
+var websocket;
+
+connectToWebsocket(websocketURL);
+
+/**
+ * Connect to the QuickPlot websocket server
+ */
+
+function connectToWebsocket(websocketURL) {
+
+    websocket = new WebSocket(websocketURL);
+
+    websocket.onmessage = function(event) {
+        var message = JSON.parse(event.data);
+        procedures[message.library][message.procedure](message.content);
+    };
+
+    websocket.onopen = function(event) {
+        log("Connected to QuickPlot");
+    };
+
+    websocket.onclose = function(event) {
+        log("What did you do? Trying to reconnect ... ");
+        setTimeout(function() { connectToWebsocket(websocketURL); }, 3000);
+    };
+}
+
+
+
+/**************************************************************************************/
+/* Plotting                                                                        */
+/**************************************************************************************/
+
+
 var plots = [];
 var plotsDiv = document.getElementById("plots");
 
-function log(message) {
-    console.log("QuickPlot: " + message);
-}
 
+/**
+ * Internal plot representation
+ * TODO: Make this library agnostic
+ *
+ * @param json  data to plot
+ */
 var Plot = function(json) {
 
     var data = json.data;
@@ -19,7 +60,10 @@ var Plot = function(json) {
 
     plots.push(this);
 
-    this.show = () => {
+    /**
+     * Show the plot in the DOM
+     */
+    this.show = function() {
         if (plotsDiv.firstChild !== undefined) {
             plotsDiv.insertBefore(div, plotsDiv.firstChild);
         } else {
@@ -28,13 +72,27 @@ var Plot = function(json) {
         Plotly.newPlot(div.id, data);
     };
 
-    this.remove = () => {
+    /**
+     * Remove the plot from the DOM
+     */
+    this.remove = function() {
         plotsDiv.removeChild(div);
     };
 };
 
+
+
+/**
+ * Map with all the local procedures the server has access to
+ */
 var procedures = {
-    general : {
+
+    // For project speficic procedures
+    QuickPlot : {
+
+        /**
+         * Remove all plots from the DOM
+         */
         clear : function() {
             for (var i = 0; i < plots.length; i++) {
                 plots[i].remove();
@@ -43,34 +101,32 @@ var procedures = {
             plotsDiv.className = "show";
         }
     },
+
     plotly : {
+
+        /**
+         * Create a new plot and show it in the browser
+         *
+         * @param data  data to plot
+         */
         newPlot : function(data) {
             var plot = new Plot(data);
             plot.show();
         }
+
     }
 };
 
-var websocket;
 
-function connectToWebsocket(websocketURL) {
 
-    log("Connecting to Haskell program...");
+/**************************************************************************************/
+/* General                                                                         */
+/**************************************************************************************/
 
-    websocket = new WebSocket(websocketURL);
 
-    websocket.onmessage = function(event) {
-        var message = JSON.parse(event.data);
-        procedures[message.library][message.procedure](message.content);
-    };
-
-    // websocket.onopen = function(event) {
-    // };
-
-    websocket.onclose = function(event) {
-        log("Lost connection to Haskell program");
-        setTimeout(() => connectToWebsocket(websocketURL), 3000);
-    };
+/**
+ * Log to the user and show that message is from QuickPlot
+ */
+function log(message) {
+    console.log("QuickPlot: " + message);
 }
-
-connectToWebsocket(websocketURL);
