@@ -37,13 +37,13 @@ runServer userDir port = do
         else do
             putStrLn $ mconcat ["Find QuickPlot at \"localhost:", show port, "\" in your browser"]
             atomicWriteIORef serverRunning True
-            void $ forkIO $ httpServe config (service "src/frontend")
+            _ <- forkIO $ httpServe config (service "src/frontend")
             void $ takeMVar channel -- HACK: Reading "stop" before websocketHandler so it doesn't block
-    where config = setErrorLog ConfigNoLog $
-                   setAccessLog ConfigNoLog $
-                   setVerbose False $
-                   setPort port
-                   defaultConfig
+    where config =   setErrorLog ConfigNoLog
+                   $ setAccessLog ConfigNoLog
+                   $ setVerbose False
+                   $ setPort port
+                     defaultConfig
 
 
 -- | Declare the routing and the services of the server

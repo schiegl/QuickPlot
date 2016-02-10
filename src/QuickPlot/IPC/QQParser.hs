@@ -1,5 +1,5 @@
 module QuickPlot.IPC.QQParser (
-      JsonValue (..)
+      JSONValue (..)
     , HashKey (..)
     , parseJSON
 ) where
@@ -13,13 +13,13 @@ import           Data.Scientific (Scientific)
 import qualified Data.Text as T
 
 
-data JsonValue = JsonNull
-               | JsonString String
-               | JsonNumber Scientific
-               | JsonObject [(HashKey,JsonValue)]
-               | JsonArray [JsonValue]
-               | JsonBool Bool
-               | JsonCode Exp
+data JSONValue = JSONNull
+               | JSONString String
+               | JSONNumber Scientific
+               | JSONObject [(HashKey,JSONValue)]
+               | JSONArray [JSONValue]
+               | JSONBool Bool
+               | JSONCode Exp
                deriving (Eq, Show)
 
 data HashKey = HashVarKey String
@@ -28,37 +28,37 @@ data HashKey = HashVarKey String
 
 
 
-parseJSON :: String -> Either ParseError JsonValue
+parseJSON :: String -> Either ParseError JSONValue
 parseJSON = parse (jpValue <* eof) "txt"
 
-type JsonParser = Parser JsonValue
+type JSONParser = Parser JSONValue
 
-jpValue :: JsonParser
+jpValue :: JSONParser
 jpValue = do
     spaces
     res <- jpBool <|> jpNull <|> jpString <|> jpObject <|> jpNumber  <|> jpArray <|> jpCode
     spaces
     return res
 
-jpBool :: JsonParser
-jpBool = JsonBool <$> (string "true" *> pure True <|> string "false" *> pure False)
+jpBool :: JSONParser
+jpBool = JSONBool <$> (string "true" *> pure True <|> string "false" *> pure False)
 
-jpCode :: JsonParser
-jpCode = JsonCode <$> (string "#{" *> parseExp')
+jpCode :: JSONParser
+jpCode = JSONCode <$> (string "#{" *> parseExp')
     where parseExp' = do
                 str <- many1 (noneOf "}") <* char '}'
                 case parseExp str of
                     Left l -> fail l
                     Right r -> return r
 
-jpNull :: JsonParser
-jpNull = string "null" *> pure JsonNull
+jpNull :: JSONParser
+jpNull = string "null" *> pure JSONNull
 
-jpString :: JsonParser
-jpString = between (char '"') (char '"') (option [""] $ many chars) >>= return . JsonString . concat -- do
+jpString :: JSONParser
+jpString = between (char '"') (char '"') (option [""] $ many chars) >>= return . JSONString . concat -- do
 
-jpNumber :: JsonParser
-jpNumber = JsonNumber <$> do
+jpNumber :: JSONParser
+jpNumber = JSONNumber <$> do
     isMinus <- option "" (string "-")
     d <- many1 digit
     o <- option "" withDot
@@ -79,12 +79,12 @@ convert :: Monad m => String -> m Scientific
 convert = either fail return . A.parseOnly (A.scientific <* A.endOfInput) . T.pack
 
 
-jpObject :: JsonParser
+jpObject :: JSONParser
 jpObject = do
     list <- between (char '{') (char '}') (spaces *> commaSep jpHash)
-    return $ JsonObject list
+    return $ JSONObject list
     where
-        jpHash :: CharParser () (HashKey,JsonValue) -- (String,JsonValue)
+        jpHash :: CharParser () (HashKey,JSONValue) -- (String,JSONValue)
         jpHash = do
             spaces
             name <- varKey <|> symbolKey <|> quotedStringKey
@@ -104,8 +104,8 @@ quotedStringKey = HashStringKey <$> quotedString
 varKey :: CharParser () HashKey
 varKey = HashVarKey <$> (char '$' *> symbol)
 
-jpArray :: CharParser () JsonValue
-jpArray = JsonArray <$> between (char '[') (char ']') (spaces *> commaSep jpValue)
+jpArray :: CharParser () JSONValue
+jpArray = JSONArray <$> between (char '[') (char ']') (spaces *> commaSep jpValue)
 
 -------
 -- helpers for parser/grammar
@@ -137,4 +137,4 @@ unicodeChars = do
     d2 <- hexDigit
     d3 <- hexDigit
     d4 <- hexDigit
-    return $ u ++ [d1] ++ [d2] ++ [d3] ++ [d4]
+    return $ u ++ (d1 : d2 : d3 : [d4])

@@ -1,3 +1,9 @@
+/*
+    Known Bugs:
+        - Plot containers are not in sync with plot
+        - Plot doesn't resize on window resize
+*/
+
 "use strict";
 
 /**************************************************************************************/
@@ -11,6 +17,7 @@ connectToWebsocket(websocketURL);
 
 /**
  * Connect to the QuickPlot websocket server
+ * @param websocketURL  url of the websocket
  */
 
 function connectToWebsocket(websocketURL) {
@@ -37,7 +44,7 @@ function connectToWebsocket(websocketURL) {
 /* Plotting                                                                        */
 /**************************************************************************************/
 
-var plotManager = new PlotManager()
+var plotManager = new PlotManager();
 
 
 function PlotManager() {
@@ -105,7 +112,7 @@ function PlotManager() {
 
 
 /**
- * Map with all the local procedures the server has access to
+ * Map with all the local methods the server can execute
  */
 var procedures = {
 
@@ -125,11 +132,11 @@ var procedures = {
         /**
          * Create a new plot and show it in the browser
          *
-         * @param data  data to plot
+         * @param json  data to plot
          */
         newPlot : function(json) {
             var plot = plotManager.addPlot(json.data);
-            Plotly.newPlot(plot.plotArea, json.data);
+            Plotly.newPlot(plot.plotArea, json.data, json.layout);
         }
 
     }
@@ -143,6 +150,10 @@ var procedures = {
 
 var show_debug_messages = true;
 
+/**
+ * If show_debug_messages is true then message will be printed to console
+ * @param message    message to print
+ */
 function debug(message) {
     if (show_debug_messages) {
         console.log("DEBUG: " + message);

@@ -29,7 +29,7 @@ type UserDirectory = FilePath
 runQuickPlotWith :: UserDirectory
                  -> Port
                  -> IO ()
-runQuickPlotWith = runServer 
+runQuickPlotWith = runServer
 
 -- | Start a QuickPlot server at "http://localhost:8000"
 -- Run this function only once in a ghci session (even after reload)
@@ -52,37 +52,35 @@ plot :: (Plottable p)
 plot content = sendMessage (QPMessage (getLibrary content) NewPlot (toJSON content))
 
 
-
--- The reason why I didn't just use ToJSON is because it is defined for values that plotly can't interpret
--- I kept the name "toJSON" though for clarity reasons and assume that people will use the quasi-quotes
--- and don't parse JSON themselves. But I might change my mind.
-
+-- All the instances of the class are plottable and should be encoded in a JSON structure
+-- that the library can process
 class Plottable a where
     toJSON :: a -> Value
     getLibrary :: a -> Library
 
+
+-- Regular data structures will be plotted with plotly by default
+
 instance (Num x, ToJSON x) => Plottable [x] where
-    toJSON xs = [json| { data : [{ x : #{ xs } }] } |]
-    getLibrary xs = Plotly
+    toJSON xs = [json|{
+                    data : [{ x : #{ xs } }]
+                }|]
+    getLibrary _ = Plotly
 
 instance (Num x, ToJSON x) => Plottable (Vector x) where
-    toJSON xs = [json| { data : [{ x : #{ xs } }] } |]
-    getLibrary xs = Plotly
+    toJSON xs = [json|{
+                    data : [{ x : #{ xs } }]
+                }|]
+    getLibrary _ = Plotly
 
 instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable ([x],[y]) where
-    toJSON (xs, ys) = [json| { data : [{ x : #{ xs }, y : #{ ys } }] } |]
-    getLibrary (xs, ys) = Plotly
+    toJSON (xs, ys) = [json|{
+                        data : [{ x : #{ xs }, y : #{ ys } }]
+                      }|]
+    getLibrary _ = Plotly
 
 instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable (Vector x, Vector y) where
-    toJSON (xs, ys) = [json| { data : [{ x : #{ xs }, y : #{ ys } }] } |]
-    getLibrary (xs, ys) = Plotly
-
--- TODO: To: Future me or stranger
---       Message: Think of a way to not have JSON values by default plotted by plotly
-instance Plottable Value where
-    toJSON v = [json| { data : [ #{ v } ] } |]
-    getLibrary v = Plotly
-
-instance Plottable [Value] where
-    toJSON v = [json| { data : #{ v } } |]
-    getLibrary v = Plotly
+    toJSON (xs, ys) = [json|{
+                        data : [{ x : #{ xs }, y : #{ ys } }]
+                      }|]
+    getLibrary _ = Plotly
