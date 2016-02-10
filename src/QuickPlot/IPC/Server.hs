@@ -28,6 +28,7 @@ runServer userDir port = do
     return ()
     where config = setErrorLog ConfigNoLog $
                    setAccessLog ConfigNoLog $
+                   setVerbose False $ -- supresses "Listening on message"
                    setPort port
                    defaultConfig
 
@@ -61,9 +62,7 @@ handleUntilNewClient connection = do
     msg <- takeMVar channel
     case msg of
         "stop" -> return ()
-        _     -> do sendTextData connection msg
-                    threadDelay updateInterval
-                    handleUntilNewClient connection
+        _      -> sendTextData connection msg >> handleUntilNewClient connection
 
 
 -- | Handle connection exceptions of the websocket
@@ -76,11 +75,6 @@ close exception          = print $ "Exception: " ++ show exception
 
 
 
--- | Channel read interval of the server in microseconds
-updateInterval :: Int
-updateInterval = 500000
-
-
 -- | Contains the newest message for the browser
 channel :: MVar ByteString -- ^ Message for the browser
 {-# NOINLINE channel #-}
@@ -90,7 +84,6 @@ channel = unsafePerformIO newEmptyMVar
 -- | Send a raw message to the browser
 -- By setting the channel which the server reads from for new messages
 -- QuickPlot server must be running otherwise undefined behaviour
--- Should not be called faster than 0.5/s
 sendRawMessage :: ByteString -- ^ Message for the browser
                -> IO ()
 sendRawMessage = putMVar channel
@@ -98,7 +91,6 @@ sendRawMessage = putMVar channel
 
 -- | Send a message to the browser
 -- QuickPlot server must be running otherwise undefined behaviour
--- Should not be called faster than 0.5/s
 sendMessage :: QPMessage -- ^ Message for the browser
             -> IO ()
 sendMessage = sendRawMessage . encode

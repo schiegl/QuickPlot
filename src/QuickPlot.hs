@@ -13,24 +13,25 @@ module QuickPlot (
 import QuickPlot.IPC.Server
 import QuickPlot.IPC.QQ
 import Data.Aeson hiding (toJSON, json)
-import Data.Vector
+import Data.Vector hiding ((++))
 import QuickPlot.IPC.Protocol
 
 
 -- | Port the QuickPlot server is supposed to use
 type Port = Int
 -- | Directory path of the QuickPlot client files
-type CustomDirectory = FilePath
+type UserDirectory = FilePath
 
 
--- TODO: Print to console where QuickPlot can be found
 -- TODO: Load scripts from custom directory into the real index.html
 -- | Start a QuickPlot server
 -- Run this function only once in a ghci session (even after reload)
-runQuickPlotWith :: CustomDirectory
+runQuickPlotWith :: UserDirectory
                  -> Port
                  -> IO ()
-runQuickPlotWith = runServer
+runQuickPlotWith userDir port = do
+    putStrLn $ mconcat ["Find QuickPlot at \"localhost:", show port, "\" in your browser"]
+    runServer userDir port
 
 
 -- | Start a QuickPlot server at "http://localhost:8000"
