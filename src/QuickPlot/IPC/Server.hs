@@ -1,3 +1,9 @@
+{-
+    A little snap server that lives at localhost that
+        - communicates over websockets at "localhost:PORT/ws"
+        - answers HTTP requests on any other localhost URL combination
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module QuickPlot.IPC.Server (
@@ -15,6 +21,8 @@ import System.IO.Unsafe
 import Control.Exception
 import Control.Monad
 import QuickPlot.IPC.Protocol
+import Data.IORef
+
 
 
 -- | Run snap server in background as a new process
@@ -23,12 +31,17 @@ runServer :: FilePath -- ^ Path to directory that contains user scripts
           -> Int      -- ^ Port of the server
           -> IO ()
 runServer userDir port = do
-    _ <- forkIO $ httpServe config (service "src/frontend")
-    _ <- takeMVar channel -- HACK: Reading "stop" before websocketHandler so it doesn't block
-    return ()
+    running <- readIORef serverRunning
+    if running
+        then putStrLn "Start QuickPlot server only once per ghci session"
+        else do
+            putStrLn $ mconcat ["Find QuickPlot at \"localhost:", show port, "\" in your browser"]
+            atomicWriteIORef serverRunning True
+            void $ forkIO $ httpServe config (service "src/frontend")
+            void $ takeMVar channel -- HACK: Reading "stop" before websocketHandler so it doesn't block
     where config = setErrorLog ConfigNoLog $
                    setAccessLog ConfigNoLog $
-                   setVerbose False $ -- supresses "Listening on message"
+                   setVerbose False $
                    setPort port
                    defaultConfig
 
@@ -57,18 +70,19 @@ websocketHandler pending = do
 -- | Handle websocket connection until new client connects to server
 -- Will halt if it reads "stop" in the channel
 handleUntilNewClient :: Connection -- ^ Websocket connection
-                     -> IO ()
+                     -> IO ()      -- ^ Message sent to browser
 handleUntilNewClient connection = do
     msg <- takeMVar channel
     case msg of
         "stop" -> return ()
-        _      -> sendTextData connection msg >> handleUntilNewClient connection
+        _      -> do sendTextData connection msg
+                     handleUntilNewClient connection
 
 
 -- | Handle connection exceptions of the websocket
 -- TODO: Clean up instead of just messaging
 close :: ConnectionException -- ^ Websocket connection
-      -> IO ()
+      -> IO ()               -- ^ Message that exception happened in stdout
 close (CloseRequest _ _) = print "Exception: CloseRequest"
 close ConnectionClosed   = print "Exception: ConnectionClosed"
 close exception          = print $ "Exception: " ++ show exception
@@ -81,16 +95,24 @@ channel :: MVar ByteString -- ^ Message for the browser
 channel = unsafePerformIO newEmptyMVar
 
 
+-- | Set to true if server is running
+serverRunning :: IORef Bool -- ^ True if server running
+{-# NOINLINE serverRunning #-}
+serverRunning = unsafePerformIO (newIORef False)
+
+
 -- | Send a raw message to the browser
 -- By setting the channel which the server reads from for new messages
--- QuickPlot server must be running otherwise undefined behaviour
 sendRawMessage :: ByteString -- ^ Message for the browser
-               -> IO ()
-sendRawMessage = putMVar channel
+               -> IO ()      -- ^ Either message sent to browser or reminder to start server in stdout
+sendRawMessage message = do
+    running <- readIORef serverRunning
+    if not running
+        then putStrLn "You need to start QuickPlot with \"runQuickPlot\" before you can plot"
+        else putMVar channel message
 
 
 -- | Send a message to the browser
--- QuickPlot server must be running otherwise undefined behaviour
 sendMessage :: QPMessage -- ^ Message for the browser
-            -> IO ()
+            -> IO ()     -- ^ Either message sent to server or rminder to start server in stdout
 sendMessage = sendRawMessage . encode
