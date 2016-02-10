@@ -33,52 +33,74 @@ function connectToWebsocket(websocketURL) {
 }
 
 
-
 /**************************************************************************************/
 /* Plotting                                                                        */
 /**************************************************************************************/
 
-
-var plots = [];
-var plotsDiv = document.getElementById("plots");
+var plotManager = new PlotManager()
 
 
-/**
- * Internal plot representation
- * TODO: Make this library agnostic
- *
- * @param json  data to plot
- */
-var Plot = function(json) {
+function PlotManager() {
 
-    var data = json.data;
-    // var layout = json.layout;
+    var numOfPlots = 0;
+    this.container = document.getElementById("plots");
 
-    var div = document.createElement("div");
-    div.id = "plot" + plots.length;
-    div.className = "plot";
+    this.addPlot = function(data, name) {
 
-    plots.push(this);
-
-    /**
-     * Show the plot in the DOM
-     */
-    this.show = function() {
-        if (plotsDiv.firstChild !== undefined) {
-            plotsDiv.insertBefore(div, plotsDiv.firstChild);
-        } else {
-            plotsDiv.appendChild(div);
+        if (name === undefined) {
+            name = "plot" + numOfPlots++;
         }
-        Plotly.newPlot(div.id, data);
-    };
 
-    /**
-     * Remove the plot from the DOM
-     */
-    this.remove = function() {
-        plotsDiv.removeChild(div);
-    };
-};
+        var plot = new Plot(data, name);
+        plot.removeButton.addEventListener("click", function() {
+             plotManager.removePlot(plot);
+        });
+
+        this.container.insertBefore(plot.DOMNode, this.container.firstChild);
+
+        hide("noPlotsMessage"); // can hide message now because user knows how to create a plot
+        debug("Added plot: \"" + plot.name + "\"");
+
+        return plot;
+    }
+
+    this.removePlot = function(plot) {
+        this.container.removeChild(plot.DOMNode);
+        debug("Removed plot: \"" + plot.name + "}\"");
+    }
+
+    this.removeAllPlots = function() {
+        var current = this.container;
+        while (current.firstChild) {
+            current.removeChild(current.firstChild);
+        }
+        debug("Removing all plots");
+    }
+}
+
+
+ function Plot(data, name) {
+
+    this.name         = name
+    this.data         = data;
+    this.DOMNode      = document.createElement("div");
+    this.plotArea     = document.createElement("div");
+    this.controlArea  = document.createElement("div")
+    this.removeButton = document.createElement("a");
+
+    this.plotArea.setAttribute("class", "plotArea");
+    this.plotArea.setAttribute("class", "controlArea");
+    this.DOMNode.setAttribute("class", "plot");
+    this.DOMNode.setAttribute("id", name);
+    this.removeButton.setAttribute("class", "removePlotButton");
+
+    this.DOMNode.appendChild(this.plotArea);
+    this.DOMNode.appendChild(this.controlArea);
+    this.controlArea.appendChild(this.removeButton);
+
+    debug("Created plot with name: " + name);
+
+ }
 
 
 
@@ -94,11 +116,7 @@ var procedures = {
          * Remove all plots from the DOM
          */
         clear : function() {
-            for (var i = 0; i < plots.length; i++) {
-                plots[i].remove();
-            }
-            plots = [];
-            plotsDiv.className = "show";
+            plotManager.removeAllPlots();
         }
     },
 
@@ -109,9 +127,9 @@ var procedures = {
          *
          * @param data  data to plot
          */
-        newPlot : function(data) {
-            var plot = new Plot(data);
-            plot.show();
+        newPlot : function(json) {
+            var plot = plotManager.addPlot(json.data);
+            Plotly.newPlot(plot.plotArea, json.data);
         }
 
     }
@@ -123,10 +141,36 @@ var procedures = {
 /* General                                                                         */
 /**************************************************************************************/
 
+var show_debug_messages = true;
+
+function debug(message) {
+    if (show_debug_messages) {
+        console.log("DEBUG: " + message);
+    }
+}
+
 
 /**
  * Log to the user and show that message is from QuickPlot
  */
 function log(message) {
     console.log("QuickPlot: " + message);
+}
+
+/**
+ * Hide an element
+ * @param element   id of the element
+ */
+function hide(element) {
+    document.getElementById(element).style.display = "none";
+    debug("Hiding element: \"" + element + "\"");
+}
+
+/**
+ * Show an element
+ * @param element   id of the element
+ */
+function show(element) {
+    document.getElementById(element).style.display = "block";
+    debug("Showing element: \"" + element + "\"");
 }

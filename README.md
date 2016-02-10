@@ -17,11 +17,24 @@ How do I use it?
 This library is not ready to use just yet. The visualization libraries are not fully implemented.
 
 
-Can I help?
------------
+FAQ
+---
 
-Yup! The biggest points on my TODO list are:
+## Does it work on X?
 
- - think of a versatile way to interface as many JSON APIs and JavaScript libraries as possible
- - write an UI in HTML/CSS/JS that manages the visualizations
- - make the server more resilient towards unexpected events (reloads, interrupts)
+Probably yes. If Linux can run on a potato so can this. But jokes aside. [If you updated your browser in the last couple of years](http://caniuse.com/websockets) and you are allowed to have a local server running at your localhost address then it will work.
+
+## Can you implement library X?
+
+If the library takes JSON as a input submit an issue. Libraries like [D3.js](https://d3js.org) are problematic however. Graphs in D3 are created programatically and therefore you can't just pick a graph type and say plot it. You have to create them from scratch. If there are examples that give you goosebumps it is possible to integrate them separately. Or you just include it as a user script yourself.
+
+## How can I help?
+
+There are many ways to do so:
+
+- If you know JavaScript/HTML/CSS you could make the UI prettier, more user friendly or easier extensible
+- Implement a visualization library in JavaScript
+
+## Can this library only use JavaScript libraries?
+
+Technically any library that Haskell can convice to create graphics is compatible.

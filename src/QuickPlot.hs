@@ -29,10 +29,7 @@ type UserDirectory = FilePath
 runQuickPlotWith :: UserDirectory
                  -> Port
                  -> IO ()
-runQuickPlotWith userDir port = do
-    putStrLn $ mconcat ["Find QuickPlot at \"localhost:", show port, "\" in your browser"]
-    runServer userDir port
-
+runQuickPlotWith = runServer 
 
 -- | Start a QuickPlot server at "http://localhost:8000"
 -- Run this function only once in a ghci session (even after reload)
