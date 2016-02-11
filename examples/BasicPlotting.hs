@@ -5,6 +5,7 @@ module Main where
 import QuickPlot
 import QuickPlot.Vis
 import QuickPlot.Plotly
+import Control.Concurrent
 
 
 -- Plotting a network with vis.js
@@ -121,4 +122,8 @@ options = [vis|{
 myNetwork = [vis| { nodes : #{ nodes }, edges : #{ edges } } |]
 
 main :: IO ()
-main = return ()
+main = do
+    runQuickPlot
+    print "Waiting 5 seconds for you to connect"
+    threadDelay 5000000
+    plot (myNetwork, options)
