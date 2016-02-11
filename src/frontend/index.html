@@ -4,17 +4,35 @@
         <meta charset="utf-8">
         <title>QuickPlot</title>
 
-        <link rel="stylesheet" href="style.css" media="screen" title="no title" charset="utf-8">
-        <script src="quickplot-client.js" charset="utf-8" defer="defer"></script>
-        <script src="plotly.js" charset="utf-8"></script>
+        <!-- QuickPlot styles -->
+        <link rel="stylesheet" href="style.css" media="screen" charset="utf-8">
+        <link rel="stylesheet" href="gridstack.css" media="screen" charset="utf-8">
 
+        <!-- visualization scripts -->
+        <script src="jquery.js" charset="utf-8"></script>
+        <script src="jquery-ui.js" charset="utf-8"></script>
+        <script src="lodash.js" charset="utf-8"></script>
+        <script src="gridstack.js" charset="utf-8"></script>
+        <script src="plotly.js" charset="utf-8"></script>
+        <script src="vis.js" charset="utf-8"></script>
+        <script src="quickplot-client.js" charset="utf-8" defer="defer"></script>
+        <style media="screen">
+
+        </style>
     </head>
     <body>
-        <div id="plots">
-            <div id="noPlotsMessage">
-                <h1>no plots :(</h1>
-                <span>try typing</span> <code>plot [1..10 :: Int]</code> <span>into ghci</span>
-            </div>
+        <div id="noPlotsMessage">
+            <h1>no plots...</h1>
+            <span>try typing</span> <code>plot [1..10 :: Int]</code> <span>into ghci</span>
         </div>
+        <div id="plots" class="grid-stack">
+        </div>
+
+
+        <footer>
+            <span>references: </span>
+            <a href="https://plot.ly/javascript/reference/">plotly</a>
+            <a href="http://visjs.org">vis</a>
+        </footer>
     </body>
 </html>

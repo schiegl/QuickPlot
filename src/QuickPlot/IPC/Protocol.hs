@@ -48,6 +48,7 @@ data Procedure = NewPlot
                | Clear
 data Library = QuickPlot
              | Plotly
+             | Vis
 
 instance JSON.ToJSON Procedure where
     toJSON NewPlot = JSON.String "newPlot"
@@ -56,3 +57,4 @@ instance JSON.ToJSON Procedure where
 instance JSON.ToJSON Library where
     toJSON QuickPlot = JSON.String "QuickPlot"
     toJSON Plotly = JSON.String "plotly"
+    toJSON Vis = JSON.String "vis"

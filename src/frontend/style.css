@@ -1,5 +1,57 @@
-body {
-    background-color: #eee;
+html, body {
+    font-family : "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    background-color: #e4ddd7;
+    padding : 5px 0 0 0;
+    margin : 0;
+}
+
+a {
+    color : #206343;
+    /*margin : 5px;*/
+}
+
+footer {
+    opacity : 0.7;
+    position: absolute;
+    bottom : 10px;
+    right : 10px;
+}
+
+footer:hover {
+    opacity : 1.0;
+}
+
+#noPlotsMessage {
+    width : 500px;
+    text-align : center;
+    line-height : 25px;
+    position : absolute;
+    margin:auto;
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -9em; /*set to a negative number 1/2 of your height*/
+    margin-left: -15em; /*set to a negative number 1/2 of your width*/
+}
+
+#noPlotsMessage h1 {
+    font-size : 100px;
+    font-family : "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    color : #999;
+}
+
+#noPlotsMessage span {
+    font-size : 18px;
+    font-style : italic;
+    color : #555;
+}
+
+code {
+    background : #5d524a;
+    color : white;
+    padding : 5px 7px 5px 7px;
+    margin: 0 4px 0 4px;
+    border-radius: 2px;
 }
 
 #plots {
@@ -8,52 +60,31 @@ body {
     margin : 0 auto;
 }
 
-#noPlotsMessage {
-
-    width : 100%;
-    display : block;
-    margin : 0 auto;
-    text-align : center;
-    line-height : 30px;
-}
-
-#noPlotsMessage h1 {
-    font-size : 100px;
-    font-family : Helvetica, Arial, sans-serif;
-    color : #999;
-}
-
-#noPlotsMessage span {
-    font-size : 18px;
-    font-style : italic;
-    color : #555;
-    font-family : cursive;
-}
-
-code {
-    background : #5e5047;
-    color : white;
-    padding : 5px;
-    margin: 0 4px 0 4px;
-    border-radius: 3px;
-}
-
-#plots .plot {
-    margin : 5px;
+.plot {
     -webkit-box-shadow : 0px 2px 3px 0px rgba(0,0,0,0.4);
     -moz-box-shadow : 0px 2px 3px 0px rgba(0,0,0,0.4);
     box-shadow : 0px 2px 3px 0px rgba(0,0,0,0.4);
-    height : 500px;
-    background-color : #645590;
+    background-color: white;
+    z-index : 2;
+    width : 500px;
+}
+
+.grid-stack-item-content {
+    background: white;
+    -webkit-box-shadow : 0px 2px 3px 0px rgba(0,0,0,0.4);
+    -moz-box-shadow : 0px 2px 3px 0px rgba(0,0,0,0.4);
+    box-shadow : 0px 2px 3px 0px rgba(0,0,0,0.4);
+    background-color: white;
+    z-index : 2;
 }
 
 .plotArea {
+    background-color : white;
+    padding : 50px;
     width : 100%;
+    height : 100%;
 }
 
-
-.controlArea {
-}
 
 .removePlotButton {
     width : 32px;

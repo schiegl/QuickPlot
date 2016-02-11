@@ -123,7 +123,6 @@ serverRunning = unsafePerformIO (newIORef (False, 0))
 sendRawMessage :: ByteString -- ^ Message for the browser
                -> IO ()      -- ^ Either message sent to browser or reminder to start server in stdout
 sendRawMessage message = do
-    print $ "Sending: " ++ show message
     noClients <- isEmptyMVar clientThread
     (running, port) <- readIORef serverRunning
     if running

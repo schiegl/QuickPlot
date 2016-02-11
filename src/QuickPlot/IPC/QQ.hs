@@ -2,8 +2,6 @@
 
 module QuickPlot.IPC.QQ (
       json
-    , plotly
-    , PlotlyJSON (..)
 ) where
 
 import           Language.Haskell.TH
@@ -11,7 +9,7 @@ import           Language.Haskell.TH.Syntax
 import           Language.Haskell.TH.Quote
 import qualified Data.Vector as V
 import qualified Data.Text as T
-import           Data.Aeson hiding (parseJSON, json)
+import           Data.Aeson hiding (json)
 import           QuickPlot.IPC.QQParser
 
 
@@ -24,9 +22,13 @@ json = QuasiQuoter { quoteExp  = jsonExp
 
 jsonExp :: String -> ExpQ
 jsonExp string =
-    case parseJSON string of
+    case parseTHJSON string of
         Left err  -> error $ "JSON is invalid: " ++ show err
         Right val -> [| val |]
+
+
+instance Lift Value where
+    lift value = [| value |]
 
 
 instance Lift JSONValue where
@@ -44,32 +46,3 @@ instance Lift JSONValue where
     lift (JSONNumber n)  = [| Number (fromRational $(return $ LitE $ RationalL (toRational n))) |]
     lift (JSONBool b)    = [| Bool b |]
     lift (JSONCode e)    = [| toJSON $(return e) |]
-
-
-
--- This quasiquoter is the same as json but it wraps the value with PlotlyJSON
--- It makes writing code more clear when using multiple libraries
-plotly :: QuasiQuoter
-plotly = QuasiQuoter { quoteExp  = plotlyExp
-                     , quotePat  = const $ error "No quotePat defined for jsonQQ"
-                     , quoteType = const $ error "No quoteType defined for jsonQQ"
-                     , quoteDec  = const $ error "No quoteDec defined for jsonQQ"
-                     }
-
-plotlyExp :: String -> ExpQ
-plotlyExp string =
-    case parseJSON string of
-        Left err  -> error $ "JSON is invalid: " ++ show err
-        Right val -> [| PlotlyJSON val |]
-
-
-data PlotlyJSON = PlotlyJSON Value
-
-instance ToJSON PlotlyJSON where
-    toJSON (PlotlyJSON value) = value
-
-instance Lift PlotlyJSON where
-    lift (PlotlyJSON val) = [| PlotlyJSON val |]
-
-instance Lift Value where
-    lift value = [| value |]

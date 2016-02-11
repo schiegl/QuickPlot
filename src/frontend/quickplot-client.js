@@ -34,7 +34,7 @@ function connectToWebsocket(websocketURL) {
     };
 
     websocket.onclose = function(event) {
-        log("What did you do? Trying to reconnect ... ");
+        log("What did you do?? D: ... Trying to reconnect");
         setTimeout(function() { connectToWebsocket(websocketURL); }, 3000);
     };
 }
@@ -49,8 +49,28 @@ var plotManager = new PlotManager();
 
 function PlotManager() {
 
+    var defaultPlotSize = {
+        x : 8,
+        y : 6
+    };
+
     var numOfPlots = 0;
-    this.container = document.getElementById("plots");
+
+    var options = {
+        cell_height: 80,
+        vertical_margin: 10,
+        always_show_resize_handle : true,
+        animate : true
+    };
+
+    $("#plots").gridstack(options);
+
+    var grid = $("#plots").data("gridstack");
+
+
+    /**
+     * Add a new plot to the grid
+     */
 
     this.addPlot = function(data, name) {
 
@@ -59,54 +79,41 @@ function PlotManager() {
         }
 
         var plot = new Plot(data, name);
-        plot.removeButton.addEventListener("click", function() {
-             plotManager.removePlot(plot);
-        });
+        grid.add_widget(plot.gridStackItem, 0, 0, defaultPlotSize.x, defaultPlotSize.y, true);
 
-        this.container.insertBefore(plot.DOMNode, this.container.firstChild);
-
-        hide("noPlotsMessage"); // can hide message now because user knows how to create a plot
+        $("#noPlotsMessage").hide();
         debug("Added plot: \"" + plot.name + "\"");
 
         return plot;
     }
 
     this.removePlot = function(plot) {
-        this.container.removeChild(plot.DOMNode);
-        debug("Removed plot: \"" + plot.name + "}\"");
+        $("#" + plot.name).remove();
+        debug("Removed plot: \"" + plot.name + "\"");
     }
 
     this.removeAllPlots = function() {
-        var current = this.container;
-        while (current.firstChild) {
-            current.removeChild(current.firstChild);
-        }
+        $(".plot").remove();
+        $("#noPlotsMessage").show();
         debug("Removing all plots");
     }
 }
 
-
  function Plot(data, name) {
 
-    this.name         = name
-    this.data         = data;
-    this.DOMNode      = document.createElement("div");
-    this.plotArea     = document.createElement("div");
-    this.controlArea  = document.createElement("div")
-    this.removeButton = document.createElement("a");
+    this.name                 = name;
+    this.data                 = data;
+    this.gridStackItem        = $("<div id='" + name + "'>");
+    this.gridStackItemContent = $("<div class='grid-stack-item-content'>");
+    this.plotArea             = $("<div class='plotArea'>");
+    this.gridStackItemContent.append(this.plotArea);
+    this.gridStackItem.append(this.gridStackItemContent);
 
-    this.plotArea.setAttribute("class", "plotArea");
-    this.plotArea.setAttribute("class", "controlArea");
-    this.DOMNode.setAttribute("class", "plot");
-    this.DOMNode.setAttribute("id", name);
-    this.removeButton.setAttribute("class", "removePlotButton");
-
-    this.DOMNode.appendChild(this.plotArea);
-    this.DOMNode.appendChild(this.controlArea);
-    this.controlArea.appendChild(this.removeButton);
+    this.getPlotArea = function() {
+        return this.plotArea.get(0);
+    }
 
     debug("Created plot with name: " + name);
-
  }
 
 
@@ -123,6 +130,7 @@ var procedures = {
          * Remove all plots from the DOM
          */
         clear : function() {
+            debug("clear");
             plotManager.removeAllPlots();
         }
     },
@@ -135,11 +143,24 @@ var procedures = {
          * @param json  data to plot
          */
         newPlot : function(json) {
+            debug("plotly newPlot:", json);
             var plot = plotManager.addPlot(json.data);
-            Plotly.newPlot(plot.plotArea, json.data, json.layout);
+            Plotly.newPlot(plot.getPlotArea(), json.data, json.layout);
         }
 
-    }
+    },
+    vis : {
+    /**
+         * Create a new plot and show it in the browser
+         *
+         * @param json  data to plot
+         */
+        newPlot : function(json) {
+            debug("vis newPlot:", json);
+            var plot = plotManager.addPlot(json.data);
+            var network = new vis.Network(plot.getPlotArea(), json.data, json.options);
+        }
+     }
 };
 
 
@@ -154,9 +175,17 @@ var show_debug_messages = true;
  * If show_debug_messages is true then message will be printed to console
  * @param message    message to print
  */
-function debug(message) {
+function debug(one, two, three, four) {
     if (show_debug_messages) {
-        console.log("DEBUG: " + message);
+        if (two === undefined) {
+            console.log("DEBUG|", one);
+        } else if (three === undefined) {
+            console.log("DEBUG|", one, two);
+        } else if (four === undefined){
+            console.log("DEBUG|", one, two, three);
+        } else {
+            console.log("DEBUG|", one, two, three, four);
+        }
     }
 }
 
@@ -166,22 +195,4 @@ function debug(message) {
  */
 function log(message) {
     console.log("QuickPlot: " + message);
-}
-
-/**
- * Hide an element
- * @param element   id of the element
- */
-function hide(element) {
-    document.getElementById(element).style.display = "none";
-    debug("Hiding element: \"" + element + "\"");
-}
-
-/**
- * Show an element
- * @param element   id of the element
- */
-function show(element) {
-    document.getElementById(element).style.display = "block";
-    debug("Showing element: \"" + element + "\"");
 }

@@ -1,7 +1,7 @@
 module QuickPlot.IPC.QQParser (
       JSONValue (..)
     , HashKey (..)
-    , parseJSON
+    , parseTHJSON
 ) where
 
 import           Control.Applicative
@@ -28,8 +28,8 @@ data HashKey = HashVarKey String
 
 
 
-parseJSON :: String -> Either ParseError JSONValue
-parseJSON = parse (jpValue <* eof) "txt"
+parseTHJSON :: String -> Either ParseError JSONValue
+parseTHJSON = parse (jpValue <* eof) "txt"
 
 type JSONParser = Parser JSONValue
 
@@ -39,6 +39,13 @@ jpValue = do
     res <- jpBool <|> jpNull <|> jpString <|> jpObject <|> jpNumber  <|> jpArray <|> jpCode
     spaces
     return res
+
+-- jpValue :: JSONParser
+-- jpValue = do
+--     spaces
+--     res <- jpBool <|> jpNull <|> jpString <|> jpObject <|> jpNumber  <|> jpArray <|> jpCode
+--     spaces
+--     return res
 
 jpBool :: JSONParser
 jpBool = JSONBool <$> (string "true" *> pure True <|> string "false" *> pure False)

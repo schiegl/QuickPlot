@@ -8,11 +8,12 @@ module QuickPlot (
     , Plottable (..)
     , plot
     , clear
+    , toJSON
 ) where
 
 import QuickPlot.IPC.Server
 import QuickPlot.IPC.QQ
-import Data.Aeson hiding (toJSON, json)
+import Data.Aeson hiding (json)
 import Data.Vector hiding ((++))
 import QuickPlot.IPC.Protocol
 
@@ -49,38 +50,38 @@ clear = sendMessage (QPMessage QuickPlot Clear Null)
 plot :: (Plottable p)
      => p
      -> IO ()
-plot content = sendMessage (QPMessage (getLibrary content) NewPlot (toJSON content))
+plot content = sendMessage (QPMessage (whichLibrary content) NewPlot (plottableToJSON content))
 
 
 -- All the instances of the class are plottable and should be encoded in a JSON structure
 -- that the library can process
 class Plottable a where
-    toJSON :: a -> Value
-    getLibrary :: a -> Library
+    plottableToJSON :: a -> Value
+    whichLibrary :: a -> Library
 
 
 -- Regular data structures will be plotted with plotly by default
 
 instance (Num x, ToJSON x) => Plottable [x] where
-    toJSON xs = [json|{
+    plottableToJSON xs = [json|{
                     data : [{ x : #{ xs } }]
                 }|]
-    getLibrary _ = Plotly
+    whichLibrary _ = Plotly
 
 instance (Num x, ToJSON x) => Plottable (Vector x) where
-    toJSON xs = [json|{
+    plottableToJSON xs = [json|{
                     data : [{ x : #{ xs } }]
                 }|]
-    getLibrary _ = Plotly
+    whichLibrary _ = Plotly
 
 instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable ([x],[y]) where
-    toJSON (xs, ys) = [json|{
+    plottableToJSON (xs, ys) = [json|{
                         data : [{ x : #{ xs }, y : #{ ys } }]
                       }|]
-    getLibrary _ = Plotly
+    whichLibrary _ = Plotly
 
 instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable (Vector x, Vector y) where
-    toJSON (xs, ys) = [json|{
+    plottableToJSON (xs, ys) = [json|{
                         data : [{ x : #{ xs }, y : #{ ys } }]
                       }|]
-    getLibrary _ = Plotly
+    whichLibrary _ = Plotly

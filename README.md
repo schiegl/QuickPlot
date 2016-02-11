@@ -26,7 +26,7 @@ Probably yes. If Linux can run on a potato so can this. But jokes aside. [If you
 
 #### Can you implement library X?
 
-If the library takes JSON as a input submit an issue. Libraries like [D3.js](https://d3js.org) are problematic however. Graphs in D3 are created programatically and therefore you can't just pick a graph type and say plot it. You have to create them from scratch. If there are examples that give you goosebumps it is possible to integrate them separately. Or you just include it as a user script yourself.
+If the library takes JSON as an input, submit an issue. Libraries like [D3.js](https://d3js.org) are problematic however. Graphs in D3 are created programatically and therefore you can't just pick a graph type and say plot it. You have to create them from scratch. If there are examples that give you goosebumps it is possible to integrate them separately. Or you just include it as a user script yourself.
 
 #### How can I help?
 
