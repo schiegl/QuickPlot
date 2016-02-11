@@ -1,3 +1,4 @@
+-- TODO: Put current client's ThreadID into mvar and kill it once new one comes
 {-
     A little snap server that lives at localhost that
         - communicates over websockets at "localhost:PORT/ws"
@@ -31,14 +32,15 @@ runServer :: FilePath -- ^ Path to directory that contains user scripts
           -> Int      -- ^ Port of the server
           -> IO ()
 runServer userDir port = do
-    running <- readIORef serverRunning
-    if running
-        then putStrLn "Start QuickPlot server only once per ghci session"
-        else do
-            putStrLn $ mconcat ["Find QuickPlot at \"localhost:", show port, "\" in your browser"]
-            atomicWriteIORef serverRunning True
-            _ <- forkIO $ httpServe config (service "src/frontend")
-            void $ takeMVar channel -- HACK: Reading "stop" before websocketHandler so it doesn't block
+    noClients <- isEmptyMVar clientThread
+    if noClients
+        then do
+            atomicWriteIORef serverRunning (True, port)
+            void $ forkIO $ httpServe config (service "src/frontend")
+            putStrLn $ "Find QuickPlot at \"localhost:" ++ show port ++ "\" in your browser"
+
+        else putStrLn "Start QuickPlot server only once per ghci session"
+
     where config =   setErrorLog ConfigNoLog
                    $ setAccessLog ConfigNoLog
                    $ setVerbose False
@@ -62,8 +64,8 @@ websocketHandler :: PendingConnection -- ^ About to be a websocket connection
                  -> IO ()
 websocketHandler pending = do
     connection <- acceptRequest pending
+    login
     forkPingThread connection 20 -- keep alive (every 20 seconds)
-    sendRawMessage "stop" -- HACK: runServer must read "stop" first, otherwise this connection halts
     handle close $ handleUntilNewClient connection
 
 
@@ -73,10 +75,8 @@ handleUntilNewClient :: Connection -- ^ Websocket connection
                      -> IO ()      -- ^ Message sent to browser
 handleUntilNewClient connection = do
     msg <- takeMVar channel
-    case msg of
-        "stop" -> return ()
-        _      -> do sendTextData connection msg
-                     handleUntilNewClient connection
+    sendTextData connection msg
+    handleUntilNewClient connection
 
 
 -- | Handle connection exceptions of the websocket
@@ -88,6 +88,18 @@ close ConnectionClosed   = print "Exception: ConnectionClosed"
 close exception          = print $ "Exception: " ++ show exception
 
 
+-- | Login for client threads
+-- It will kill other clients if there are any
+login :: IO ()
+login = do
+    noClients <- isEmptyMVar clientThread
+    if noClients
+        then myThreadId >>= putMVar clientThread
+        else do
+            takeMVar clientThread >>= killThread
+            myThreadId >>= putMVar clientThread
+
+
 
 -- | Contains the newest message for the browser
 channel :: MVar ByteString -- ^ Message for the browser
@@ -95,10 +107,15 @@ channel :: MVar ByteString -- ^ Message for the browser
 channel = unsafePerformIO newEmptyMVar
 
 
--- | Set to true if server is running
-serverRunning :: IORef Bool -- ^ True if server running
+-- | Tell if client connected and on which thread
+clientThread :: MVar ThreadId -- ^ Thread of the current client if there is one
+{-# NOINLINE clientThread #-}
+clientThread = unsafePerformIO newEmptyMVar
+
+-- | Tell if server was started and on which port
+serverRunning :: IORef (Bool, Int) -- ^ (if running, port)
 {-# NOINLINE serverRunning #-}
-serverRunning = unsafePerformIO (newIORef False)
+serverRunning = unsafePerformIO (newIORef (False, 0))
 
 
 -- | Send a raw message to the browser
@@ -106,10 +123,17 @@ serverRunning = unsafePerformIO (newIORef False)
 sendRawMessage :: ByteString -- ^ Message for the browser
                -> IO ()      -- ^ Either message sent to browser or reminder to start server in stdout
 sendRawMessage message = do
-    running <- readIORef serverRunning
-    if not running
-        then putStrLn "You need to start QuickPlot with \"runQuickPlot\" before you can plot"
-        else putMVar channel message
+    print $ "Sending: " ++ show message
+    noClients <- isEmptyMVar clientThread
+    (running, port) <- readIORef serverRunning
+    if running
+        then if noClients
+                then do
+                    threadDelay 1000000 -- In case browser will reconnect itself
+                    putStrLn $ "You need to go to: \"localhost:" ++ show port
+                                    ++ "\" in your browser before plotting"
+                else putMVar channel message
+    else putStrLn "You need to start QuickPlot with \"runQuickPlot\" before plotting"
 
 
 -- | Send a message to the browser
