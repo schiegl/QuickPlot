@@ -1,7 +1,9 @@
 /*
     Known Bugs:
-        - Plot containers are not in sync with plot
-        - Plot doesn't resize on window resize
+        - Vis plots can't be dragged because plot covers all space and occupies the drag event
+        - Plotly plots don't resize
+        - Resize handle is missing
+
 */
 
 "use strict";
@@ -44,60 +46,70 @@ function connectToWebsocket(websocketURL) {
 /* Plotting                                                                        */
 /**************************************************************************************/
 
-var plotManager = new PlotManager();
+var DEFAULT_PLOT_SETTINGS = {
+    sizeX : 8,
+    sizeY : 6
+};
+
+var options = {
+    cell_height: 80,
+    vertical_margin: 10,
+    always_show_resize_handle : true,
+    animate : true
+};
+
+$("#plots").gridstack(options);
 
 
-function PlotManager() {
+var PlotManager = {
 
-    var defaultPlotSize = {
-        x : 8,
-        y : 6
-    };
-
-    var numOfPlots = 0;
-
-    var options = {
-        cell_height: 80,
-        vertical_margin: 10,
-        always_show_resize_handle : true,
-        animate : true
-    };
-
-    $("#plots").gridstack(options);
-
-    var grid = $("#plots").data("gridstack");
-
+    // The gridstack (aka "plots" div) where all the plots live as "grid-stack-items"
+    GRID : $("#plots").data("gridstack"),
 
     /**
      * Add a new plot to the grid
      */
+    addPlot : function(data, name) {
 
-    this.addPlot = function(data, name) {
-
+        // Give unique name
         if (name === undefined) {
-            name = "plot" + numOfPlots++;
+            name = "plot" + (new Date()).getTime();
         }
 
         var plot = new Plot(data, name);
-        grid.add_widget(plot.gridStackItem, 0, 0, defaultPlotSize.x, defaultPlotSize.y, true);
+        this.GRID.add_widget(plot.gridStackItem, 0, 0,
+                    DEFAULT_PLOT_SETTINGS.sizeX, DEFAULT_PLOT_SETTINGS.sizeY, true);
 
         $("#noPlotsMessage").hide();
         debug("Added plot: \"" + plot.name + "\"");
 
         return plot;
-    }
+    },
 
-    this.removePlot = function(plot) {
-        $("#" + plot.name).remove();
+    /**
+     * Removes a specific plot
+     */
+    removePlot : function(plot) {
+        this.GRID.remove(plot);
+        // TODO: Check if grid is empty then show noPlotsMessage
         debug("Removed plot: \"" + plot.name + "\"");
-    }
+    },
 
-    this.removeAllPlots = function() {
-        $(".plot").remove();
+    /**
+     * Removes all the plots
+     */
+    removeAllPlots : function() {
+        this.GRID.remove_all();
         $("#noPlotsMessage").show();
         debug("Removing all plots");
     }
 }
+
+/**
+ * A plot with a unique name
+ *
+ * Data might not be shown yet
+ */
 
  function Plot(data, name) {
 
@@ -131,7 +143,7 @@ var procedures = {
          */
         clear : function() {
             debug("clear");
-            plotManager.removeAllPlots();
+            PlotManager.removeAllPlots();
         }
     },
 
@@ -144,20 +156,20 @@ var procedures = {
          */
         newPlot : function(json) {
             debug("plotly newPlot:", json);
-            var plot = plotManager.addPlot(json.data);
+            var plot = PlotManager.addPlot(json.data);
             Plotly.newPlot(plot.getPlotArea(), json.data, json.layout);
         }
 
     },
     vis : {
-    /**
+        /**
          * Create a new plot and show it in the browser
          *
          * @param json  data to plot
          */
         newPlot : function(json) {
             debug("vis newPlot:", json);
-            var plot = plotManager.addPlot(json.data);
+            var plot = PlotManager.addPlot(json.data);
             var network = new vis.Network(plot.getPlotArea(), json.data, json.options);
         }
      }
@@ -178,13 +190,13 @@ var show_debug_messages = true;
 function debug(one, two, three, four) {
     if (show_debug_messages) {
         if (two === undefined) {
-            console.log("DEBUG|", one);
+            console.log("DEBUG || ", one);
         } else if (three === undefined) {
-            console.log("DEBUG|", one, two);
+            console.log("DEBUG || ", one, two);
         } else if (four === undefined){
-            console.log("DEBUG|", one, two, three);
+            console.log("DEBUG || ", one, two, three);
         } else {
-            console.log("DEBUG|", one, two, three, four);
+            console.log("DEBUG || ", one, two, three, four);
         }
     }
 }

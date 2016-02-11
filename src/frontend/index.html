@@ -16,18 +16,18 @@
         <script src="plotly.js" charset="utf-8"></script>
         <script src="vis.js" charset="utf-8"></script>
         <script src="quickplot-client.js" charset="utf-8" defer="defer"></script>
-        <style media="screen">
-
-        </style>
     </head>
+
     <body>
+        <!-- Show when no plots are displayed -->
         <div id="noPlotsMessage">
             <h1>no plots...</h1>
             <span>try typing</span> <code>plot [1..10 :: Int]</code> <span>into ghci</span>
         </div>
+        
         <div id="plots" class="grid-stack">
+            <!-- Here will be the plots encapsulated in "grid-stack-items" -->
         </div>
-
 
         <footer>
             <span>references: </span>
@@ -35,4 +35,5 @@
             <a href="http://visjs.org">vis</a>
         </footer>
     </body>
+
 </html>
