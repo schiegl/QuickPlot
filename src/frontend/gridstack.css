@@ -1,6 +1,7 @@
+.ui-icon-grip-small-diagonal-se::after {
+}
 :root .grid-stack-item > .ui-resizable-handle {
-  filter: none;
-  background-color: black;
+  /*filter: none;*/
 }
 
 .grid-stack {
@@ -36,7 +37,7 @@
   width: auto;
   z-index: 0 !important;
   overflow-x: hidden;
-  overflow-y: auto;
+  /*overflow-y: auto; */
 }
 
 .grid-stack > .grid-stack-item > .ui-resizable-handle {
@@ -78,7 +79,7 @@
 
 .grid-stack > .grid-stack-item > .ui-resizable-se::before,
 .grid-stack > .grid-stack-item > .ui-resizable-sw::before {
-  content: "\f065";
+  /*content: "\f065";*/
 }
 
 .grid-stack > .grid-stack-item > .ui-resizable-se {

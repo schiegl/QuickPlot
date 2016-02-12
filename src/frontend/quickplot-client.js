@@ -1,9 +1,6 @@
 /*
     Known Bugs:
         - Vis plots can't be dragged because plot covers all space and occupies the drag event
-        - Plotly plots don't resize
-        - Resize handle is missing
-
 */
 
 "use strict";
@@ -46,38 +43,113 @@ function connectToWebsocket(websocketURL) {
 /* Plotting                                                                        */
 /**************************************************************************************/
 
+
+
+/* Global options ********************************************************************/
+
+
+var LIBRARIES = {
+    vis : "vis",
+    plotly : "plotly"
+}
+
 var DEFAULT_PLOT_SETTINGS = {
     sizeX : 8,
     sizeY : 6
 };
 
-var options = {
+var gridStackOptions = {
     cell_height: 80,
     vertical_margin: 10,
     always_show_resize_handle : true,
-    animate : true
+    animate : true,
+    resizable : {
+        handles : 'e, se, s, sw, w, nw, n, ne'
+    }
 };
 
-$("#plots").gridstack(options);
 
+
+/* Plot Manager **********************************************************************/
+
+/*
+    All the plots are inside #plots which is a gridstack. Which contains grid-stack-items
+    that are controlled by gridstack.js.
+
+    Here is a little visualization
+
+    -------------------------------------------------------------------------
+    | grid-stack (aka #plots div)                                           |
+    |   |---------------------------------------------------------|         |
+    |   | .grid-stack-item                                        |         |
+    |   |   |--------------------------------------------------|  |         |
+    |   |   |  .grid-stack-item-content                        |  |         |
+    |   |   |  |--------------------------------------------|  |  |         |
+    |   |   |  | .plotArea                                  |  |  |         |
+    |   |   |  |                                            |  |  |         |
+    |   |   |  |                                            |  |  |         |
+    |   |   |  |                                            |  |  |         |
+    |   |   |  |                                            |  |  |         |
+    |   |   |  |--------------------------------------------|  |  |         |
+    |   |   |  | Here could be controls                     |  |  |         |
+    |   |   |  |--------------------------------------------|  |  |         |
+    |   |   |--------------------------------------------------|  |         |
+    |   |                                                         |         |
+    |   |---------------------------------------------------------|         |
+    |                                                                       |
+    |   |---------------------------------------------------------|         |
+    |   | another grid-stack-item                                 |         |
+    |   |                                                         |         |
+    |   |            ....... the same as above                    |         |
+    |   |                                                         |         |
+    |   |---------------------------------------------------------|         |
+    |                                                                       |
+    |-----------------------------------------------------------------------|
+
+*/
+
+
+// init gridstack
+$("#plots").gridstack(gridStackOptions);
+
+/**
+ * Handle resizing of the plots by putting an eventlistener on the grid-stack-item
+ */
+
+$("#plots").on("resizestop", function(event, ui) {
+    var gridStackItem = ui.element[0];
+    var plotArea = gridStackItem.childNodes[0].childNodes[0];
+    var newSize = {
+        width : plotArea.offsetWidth,
+        height : plotArea.offsetHeight
+    };
+
+    // e.g. plotly_name_id
+    switch (gridStackItem.id.split("_")[0]) {
+        case LIBRARIES.plotly:
+            Plotly.relayout(plotArea, newSize);
+            break;
+    }
+});
 
 var PlotManager = {
-
-    // The gridstack (aka "plots" div) where all the plots live as "grid-stack-items"
-    GRID : $("#plots").data("gridstack"),
-
     /**
      * Add a new plot to the grid
+     * @param data     json data
+     * @param library  which library this plot uses
+     * @param name     unique name (if not supplied it will be assigned)
      */
-    addPlot : function(data, name) {
+    addPlot : function(data, library, name) {
 
         // Give unique name
         if (name === undefined) {
-            name = "plot" + (new Date()).getTime();
+            name = library + "_plot_" + (new Date()).getTime();
+        } else {
+            name = library + "_" + name;
         }
 
         var plot = new Plot(data, name);
-        this.GRID.add_widget(plot.gridStackItem, 0, 0,
+        $("#plots").data("gridstack").add_widget(plot.gridStackItem, 0, 0,
                     DEFAULT_PLOT_SETTINGS.sizeX, DEFAULT_PLOT_SETTINGS.sizeY, true);
 
         $("#noPlotsMessage").hide();
@@ -90,7 +162,7 @@ var PlotManager = {
      * Removes a specific plot
      */
     removePlot : function(plot) {
-        this.GRID.remove(plot);
+        $("#plots").data("gridstack").remove(plot);
         // TODO: Check if grid is empty then show noPlotsMessage
         debug("Removed plot: \"" + plot.name + "\"");
     },
@@ -99,16 +171,20 @@ var PlotManager = {
      * Removes all the plots
      */
     removeAllPlots : function() {
-        this.GRID.remove_all();
+        $("#plots").data("gridstack").remove_all();
         $("#noPlotsMessage").show();
         debug("Removing all plots");
     }
-}
+};
 
 /**
- * A plot with a unique name
+ * A plot.
  *
- * Data might not be shown yet
+ * Every plot is inside a gridStackItem (to be specific inside gridStackItemContent)
+ * and has
+ *      - unique name that looks like this "library_name"
+ *
+ * After you created the plot you still have to put it into the grid
  */
 
  function Plot(data, name) {
@@ -123,7 +199,7 @@ var PlotManager = {
 
     this.getPlotArea = function() {
         return this.plotArea.get(0);
-    }
+    };
 
     debug("Created plot with name: " + name);
  }
@@ -156,7 +232,7 @@ var procedures = {
          */
         newPlot : function(json) {
             debug("plotly newPlot:", json);
-            var plot = PlotManager.addPlot(json.data);
+            var plot = PlotManager.addPlot(json.data, LIBRARIES.plotly);
             Plotly.newPlot(plot.getPlotArea(), json.data, json.layout);
         }
 
@@ -169,7 +245,7 @@ var procedures = {
          */
         newPlot : function(json) {
             debug("vis newPlot:", json);
-            var plot = PlotManager.addPlot(json.data);
+            var plot = PlotManager.addPlot(json.data, LIBRARIES.vis);
             var network = new vis.Network(plot.getPlotArea(), json.data, json.options);
         }
      }
@@ -207,4 +283,9 @@ function debug(one, two, three, four) {
  */
 function log(message) {
     console.log("QuickPlot: " + message);
+}
+
+
+function contains(superstring, substring) {
+    return superstring.indexOf(substring) >= 0;
 }
