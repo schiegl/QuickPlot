@@ -1,6 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE QuasiQuotes #-}
-
 module QuickPlot (
       module QuickPlot.IPC.QQ
     , runQuickPlot
@@ -13,8 +10,6 @@ module QuickPlot (
 
 import QuickPlot.IPC.Server
 import QuickPlot.IPC.QQ
-import Data.Aeson hiding (json)
-import Data.Vector hiding ((++))
 import QuickPlot.IPC.Protocol
 
 
@@ -27,8 +22,8 @@ type UserDirectory = FilePath
 -- TODO: Load scripts from custom directory into the real index.html
 -- | Start a QuickPlot server
 -- Run this function only once in a ghci session (even after reload)
-runQuickPlotWith :: UserDirectory
-                 -> Port
+runQuickPlotWith :: UserDirectory  -- ^ Path to directory with user scripts (doesn't work)
+                 -> Port           -- ^ Port of the QuickPlot server
                  -> IO ()
 runQuickPlotWith = runServer
 
@@ -38,17 +33,16 @@ runQuickPlot :: IO ()
 runQuickPlot = runQuickPlotWith "" 8000
 
 
-
 -- | Remove all plots in the browser
 -- If the browser is not connected by now the behaviour is undefined
 clear :: IO ()
 clear = sendMessage (QPMessage QuickPlot Clear Null)
 
 
--- | Show plottable data on the browser via plotly
--- If the browser is not connected by now the behaviour is undefined
+-- | Show data visualizations in the browser
+-- If the browser is not connected to QuickPlot a warning will be printed to stdout
 plot :: (Plottable p)
-     => p
+     => p             -- ^ JSON that can be visualized
      -> IO ()
 plot content = sendMessage (QPMessage (whichLibrary content) NewPlot (plottableToJSON content))
 
@@ -56,5 +50,7 @@ plot content = sendMessage (QPMessage (whichLibrary content) NewPlot (plottableT
 -- All the instances of the class are plottable and should be encoded in a JSON structure
 -- that the library can process
 class Plottable a where
+    -- | Convert to Aeson's Value
     plottableToJSON :: a -> Value
+    -- | Which library should be used to visualize the data
     whichLibrary :: a -> Library

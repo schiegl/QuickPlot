@@ -1,6 +1,7 @@
 /*
     Known Bugs:
         - Vis plots can't be dragged because plot covers all space and occupies the drag event
+        - Vis plots don't work except Network plots
 */
 
 "use strict";
