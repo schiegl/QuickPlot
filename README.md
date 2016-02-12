@@ -21,13 +21,7 @@ QuickPlot was designed to make interactive data exploration easier. So the follo
 
 **0. Install QuickPlot**
 
-````shell
-cabal install QuickPlot
-# or
-stack install QuickPlot
-# or other package helpers that can access Hackage
-# or manually
-````
+At the moment just manually.
 
 **1. Import QuickPlot**
 
