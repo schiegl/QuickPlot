@@ -1,10 +1,14 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module QuickPlot.Vis (
       vis
     , VisJSON (..)
+    , VisPlotType (..)
+    , VisData
+    , VisOptions
 ) where
 
 
@@ -15,32 +19,49 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 import Language.Haskell.TH.Quote
 import Data.Aeson hiding (json)
+import Data.Text
 
 
-instance Plottable VisJSON where
-    plottableToJSON (VisJSON trace) = [json|{
-                                      data : #{ trace }
+
+
+type VisData = VisJSON
+type VisOptions = VisJSON
+
+data VisPlotType = Network
+                 | Timeline
+                 | Graph2D
+                 | Graph3D
+                 deriving Show
+
+
+instance Plottable (VisPlotType, VisData) where
+    plottableToJSON (plotType, (VisJSON trace)) = [json|{
+                                      plotType : #{ plotType }
+                                    , data : #{ trace }
                                     , options : {}
                              }|]
     whichLibrary _ = Vis
 
-instance Plottable [VisJSON] where
-    plottableToJSON traces = [json|{
-                          data : #{ traces }
+instance Plottable (VisPlotType, [VisData]) where
+    plottableToJSON (plotType, traces) = [json|{
+                          plotType : #{ plotType }
+                        , data : #{ traces }
                         , options : {}
                     }|]
     whichLibrary _ = Vis
 
-instance Plottable (VisJSON, VisJSON) where
-    plottableToJSON (traces, options) = [json|{
-                                  data : #{ traces }
+instance Plottable (VisPlotType, VisData, VisOptions) where
+    plottableToJSON (plotType, traces, options) = [json|{
+                                  plotType : #{ plotType }
+                                , data : #{ traces }
                                 , options : #{ options }
                               }|]
     whichLibrary _ = Vis
 
-instance Plottable ([VisJSON], VisJSON) where
-    plottableToJSON (traces, options) = [json|{
-                                  data : #{ traces }
+instance Plottable (VisPlotType, [VisData], VisOptions) where
+    plottableToJSON (plotType, traces, options) = [json|{
+                                  plotType : #{ plotType }
+                                , data : #{ traces }
                                 , options : #{ options }
                               }|]
     whichLibrary _ = Vis
@@ -71,8 +92,11 @@ data VisJSON = VisJSON Value
 instance ToJSON VisJSON where
     toJSON (VisJSON value) = value
 
--- instance ToJSON [VisJSON] where
---     toJSON values = toJSON (fmap toJSON values)
+instance ToJSON VisPlotType where
+    toJSON Network  = String "network"
+    toJSON Timeline = String "timeline"
+    toJSON Graph2D  = String "graph2d"
+    toJSON Graph3D  = String "graph3d"
 
 instance Lift VisJSON where
     lift (VisJSON value) = [| VisJSON value |]

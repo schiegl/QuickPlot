@@ -1,3 +1,5 @@
+-- TODO: Ask wether #{ } should be changed to something else as it might be confusing
+
 module QuickPlot.IPC.QQParser (
       JSONValue (..)
     , HashKey (..)

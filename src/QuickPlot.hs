@@ -58,30 +58,3 @@ plot content = sendMessage (QPMessage (whichLibrary content) NewPlot (plottableT
 class Plottable a where
     plottableToJSON :: a -> Value
     whichLibrary :: a -> Library
-
-
--- Regular data structures will be plotted with plotly by default
-
-instance (Num x, ToJSON x) => Plottable [x] where
-    plottableToJSON xs = [json|{
-                    data : [{ x : #{ xs } }]
-                }|]
-    whichLibrary _ = Plotly
-
-instance (Num x, ToJSON x) => Plottable (Vector x) where
-    plottableToJSON xs = [json|{
-                    data : [{ x : #{ xs } }]
-                }|]
-    whichLibrary _ = Plotly
-
-instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable ([x],[y]) where
-    plottableToJSON (xs, ys) = [json|{
-                        data : [{ x : #{ xs }, y : #{ ys } }]
-                      }|]
-    whichLibrary _ = Plotly
-
-instance (Num x, ToJSON x, Num y, ToJSON y) => Plottable (Vector x, Vector y) where
-    plottableToJSON (xs, ys) = [json|{
-                        data : [{ x : #{ xs }, y : #{ ys } }]
-                      }|]
-    whichLibrary _ = Plotly

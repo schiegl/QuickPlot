@@ -240,13 +240,30 @@ var procedures = {
     vis : {
         /**
          * Create a new plot and show it in the browser
-         *
+         * TODO: Only works for networks. Other plot types "Say that drawing is too limiting"
          * @param json  data to plot
          */
+
         newPlot : function(json) {
-            debug("vis newPlot:", json);
             var plot = PlotManager.addPlot(json.data, LIBRARIES.vis);
-            var network = new vis.Network(plot.getPlotArea(), json.data, json.options);
+            var dataset = new vis.DataSet(json.data);
+            switch (json.plotType) {
+                case "network":
+                    var network = new vis.Network(plot.getPlotArea(), json.data, json.options);
+                    break;
+                case "timeline":
+                    var timeline = new vis.Timeline(plot.getPlotArea(), dataset, json.options);
+                    break;
+                case "graph2d":
+                    var graph2d = new vis.Graph2d(plot.getPlotArea(), dataset, json.options);
+                    break;
+                case "graph3d":
+                    var graph3d = new vis.Graph3d(plot.getPlotArea(), dataset, json.options);
+                    break;
+                default:
+                    debug("vis plottype doesn't exist");
+            }
+            debug("vis newPlot:", json);
         }
      }
 };
@@ -283,9 +300,4 @@ function debug(one, two, three, four) {
  */
 function log(message) {
     console.log("QuickPlot: " + message);
-}
-
-
-function contains(superstring, substring) {
-    return superstring.indexOf(substring) >= 0;
 }
