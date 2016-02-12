@@ -24,6 +24,12 @@ import Control.Monad
 import QuickPlot.IPC.Protocol
 import Data.IORef
 
+import Paths_QuickPlot
+
+
+-- | Get the filepath to the static HTML/CSS/JS
+getFrontendDir :: IO FilePath
+getFrontendDir = getDataFileName "src/frontend"
 
 
 -- | Run snap server in background as a new process
@@ -36,7 +42,8 @@ runServer userDir port = do
     if noClients
         then do
             atomicWriteIORef serverRunning (True, port)
-            void $ forkIO $ httpServe config (service "src/frontend")
+            frontendDir <- getFrontendDir
+            void $ forkIO $ httpServe config (service frontendDir)
             putStrLn $ "Find QuickPlot at \"localhost:" ++ show port ++ "\" in your browser"
 
         else putStrLn "Start QuickPlot server only once per ghci session"

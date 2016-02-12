@@ -11,6 +11,7 @@ module QuickPlot (
 import QuickPlot.IPC.Server
 import QuickPlot.IPC.QQ
 import QuickPlot.IPC.Protocol
+import Data.Aeson
 
 
 -- | Port the QuickPlot server is supposed to use
