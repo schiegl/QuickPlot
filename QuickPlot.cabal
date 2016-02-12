@@ -16,6 +16,7 @@ data-dir:              .
 data-files:            src/frontend/*.js
                      , src/frontend/*.html
                      , src/frontend/*.css
+                     , src/frontend/img/*.png
 
 
 library

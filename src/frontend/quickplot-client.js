@@ -56,7 +56,8 @@ var LIBRARIES = {
 
 var DEFAULT_PLOT_SETTINGS = {
     sizeX : 8,
-    sizeY : 6
+    sizeY : 6,
+    controlBoxHeight : parseInt(window.getComputedStyle(document.body).getPropertyValue("--control-box-height"))
 };
 
 var gridStackOptions = {
@@ -65,7 +66,7 @@ var gridStackOptions = {
     always_show_resize_handle : true,
     animate : true,
     resizable : {
-        handles : 'e, se, s, sw, w, nw, n, ne'
+        handles : 'e, se, s, w, nw, n, ne'
     }
 };
 
@@ -86,7 +87,7 @@ var gridStackOptions = {
     |   |   |--------------------------------------------------|  |         |
     |   |   |  .grid-stack-item-content                        |  |         |
     |   |   |  |--------------------------------------------|  |  |         |
-    |   |   |  | .plotArea                                  |  |  |         |
+    |   |   |  | .plot-box                                  |  |  |         |
     |   |   |  |                                            |  |  |         |
     |   |   |  |                                            |  |  |         |
     |   |   |  |                                            |  |  |         |
@@ -109,7 +110,6 @@ var gridStackOptions = {
 
 */
 
-
 // init gridstack
 $("#plots").gridstack(gridStackOptions);
 
@@ -119,16 +119,16 @@ $("#plots").gridstack(gridStackOptions);
 
 $("#plots").on("resizestop", function(event, ui) {
     var gridStackItem = ui.element[0];
-    var plotArea = gridStackItem.childNodes[0].childNodes[0];
+    var plotBox = gridStackItem.childNodes[0].childNodes[0];
     var newSize = {
-        width : plotArea.offsetWidth,
-        height : plotArea.offsetHeight
+        width : plotBox.offsetWidth,
+        height : (plotBox.offsetHeight - DEFAULT_PLOT_SETTINGS.controlBoxHeight)
     };
 
     // e.g. plotly_name_id
     switch (gridStackItem.id.split("_")[0]) {
         case LIBRARIES.plotly:
-            Plotly.relayout(plotArea, newSize);
+            Plotly.relayout(plotBox, newSize);
             break;
     }
 });
@@ -153,19 +153,20 @@ var PlotManager = {
         $("#plots").data("gridstack").add_widget(plot.gridStackItem, 0, 0,
                     DEFAULT_PLOT_SETTINGS.sizeX, DEFAULT_PLOT_SETTINGS.sizeY, true);
 
-        $("#noPlotsMessage").hide();
+        $("#no-plots-message").hide();
         debug("Added plot: \"" + plot.name + "\"");
 
         return plot;
     },
 
     /**
-     * Removes a specific plot
+     * Removes a plot by id (which is also the name)
      */
-    removePlot : function(plot) {
-        $("#plots").data("gridstack").remove(plot);
-        // TODO: Check if grid is empty then show noPlotsMessage
-        debug("Removed plot: \"" + plot.name + "\"");
+    removePlotById : function(id) {
+        var gridStackItem = $("#" + id).get(0);
+        $("#plots").data("gridstack").remove_widget(gridStackItem);
+        // TODO: Check if grid is empty then show no-plots-message
+        debug("Removed plot: \"" + id + "\"");
     },
 
     /**
@@ -173,7 +174,7 @@ var PlotManager = {
      */
     removeAllPlots : function() {
         $("#plots").data("gridstack").remove_all();
-        $("#noPlotsMessage").show();
+        $("#no-plots-message").show();
         debug("Removing all plots");
     }
 };
@@ -194,12 +195,21 @@ var PlotManager = {
     this.data                 = data;
     this.gridStackItem        = $("<div id='" + name + "'>");
     this.gridStackItemContent = $("<div class='grid-stack-item-content'>");
-    this.plotArea             = $("<div class='plotArea'>");
-    this.gridStackItemContent.append(this.plotArea);
+    this.plotBox              = $("<div class='plot-box'>");
+    this.controlBox           = $("<div class='control-box'>");
+    var removeButton          = $("<button class='remove-plot-button'>");
+
+    this.controlBox.append(removeButton);
+    this.gridStackItemContent.append(this.plotBox);
+    this.gridStackItemContent.append(this.controlBox);
     this.gridStackItem.append(this.gridStackItemContent);
 
-    this.getPlotArea = function() {
-        return this.plotArea.get(0);
+    removeButton.on("click", function() {
+        PlotManager.removePlotById(name);
+    });
+
+    this.getPlotBox = function() {
+        return this.plotBox.get(0);
     };
 
     debug("Created plot with name: " + name);
@@ -234,7 +244,7 @@ var procedures = {
         newPlot : function(json) {
             debug("plotly newPlot:", json);
             var plot = PlotManager.addPlot(json.data, LIBRARIES.plotly);
-            Plotly.newPlot(plot.getPlotArea(), json.data, json.layout);
+            Plotly.newPlot(plot.getPlotBox(), json.data, json.layout);
         }
 
     },
@@ -250,16 +260,16 @@ var procedures = {
             var dataset = new vis.DataSet(json.data);
             switch (json.plotType) {
                 case "network":
-                    var network = new vis.Network(plot.getPlotArea(), json.data, json.options);
+                    var network = new vis.Network(plot.getPlotBox(), json.data, json.options);
                     break;
                 case "timeline":
-                    var timeline = new vis.Timeline(plot.getPlotArea(), dataset, json.options);
+                    var timeline = new vis.Timeline(plot.getPlotBox(), dataset, json.options);
                     break;
                 case "graph2d":
-                    var graph2d = new vis.Graph2d(plot.getPlotArea(), dataset, json.options);
+                    var graph2d = new vis.Graph2d(plot.getPlotBox(), dataset, json.options);
                     break;
                 case "graph3d":
-                    var graph3d = new vis.Graph3d(plot.getPlotArea(), dataset, json.options);
+                    var graph3d = new vis.Graph3d(plot.getPlotBox(), dataset, json.options);
                     break;
                 default:
                     debug("vis plottype doesn't exist");
@@ -302,3 +312,14 @@ function debug(one, two, three, four) {
 function log(message) {
     console.log("QuickPlot: " + message);
 }
+
+
+var datas = [{
+	x: [1, 2, 3, 4, 5],
+    y: [1, 2, 4, 8, 16] }]
+
+var s = {
+    data : datas
+}
+
+procedures.plotly.newPlot(s);
