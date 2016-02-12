@@ -1,7 +1,7 @@
 /*
     Known Bugs:
-        - Vis plots can't be dragged because plot covers all space and occupies the drag event
-        - Vis plots don't work except Network plots
+        - vis plots don't work except Network plots
+        - vis plot becomes unresponsive once you click it
 */
 
 "use strict";
@@ -13,7 +13,7 @@
 var websocketURL = "ws://127.0.0.1:8000/ws";
 var websocket;
 
-connectToWebsocket(websocketURL);
+// connectToWebsocket(websocketURL);
 
 /**
  * Connect to the QuickPlot websocket server
@@ -57,7 +57,7 @@ var LIBRARIES = {
 var DEFAULT_PLOT_SETTINGS = {
     sizeX : 8,
     sizeY : 6,
-    controlBoxHeight : parseInt(window.getComputedStyle(document.body).getPropertyValue("--control-box-height"))
+    controlBoxHeight : 50
 };
 
 var gridStackOptions = {
@@ -124,6 +124,9 @@ $("#plots").on("resizestop", function(event, ui) {
         width : plotBox.offsetWidth,
         height : (plotBox.offsetHeight - DEFAULT_PLOT_SETTINGS.controlBoxHeight)
     };
+
+    console.log("Default box height", DEFAULT_PLOT_SETTINGS.controlBoxHeight);
+    console.log("plotBoxOffset", newSize.height);
 
     // e.g. plotly_name_id
     switch (gridStackItem.id.split("_")[0]) {
@@ -312,14 +315,3 @@ function debug(one, two, three, four) {
 function log(message) {
     console.log("QuickPlot: " + message);
 }
-
-
-var datas = [{
-	x: [1, 2, 3, 4, 5],
-    y: [1, 2, 4, 8, 16] }]
-
-var s = {
-    data : datas
-}
-
-procedures.plotly.newPlot(s);

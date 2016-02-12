@@ -74,7 +74,7 @@ FAQ
 
 #### Does it work on X?
 
-Probably yes. If Linux can run on a potato so can this. But jokes aside. [If you updated your browser in the last couple of years](http://caniuse.com/websockets) and you are allowed to have a local server running at your localhost address then it will work.
+Probably yes. If your browser supports WebSockets, HTML5, CSS3 you'll be fine. If not please update your browser. Find out more about [here](http://caniuse.com/)
 
 #### Can you implement library X?
 

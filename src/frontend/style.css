@@ -1,8 +1,4 @@
 html, body {
-
-    /* Global variables */
-    --control-box-height : 40px;
-
     font-family : "Palatino Linotype", "Book Antiqua", Palatino, serif;
     background-color: #e4ddd7;
     padding : 5px 0 0 0;
@@ -82,17 +78,21 @@ code {
 .plot-box {
     background-color : white;
     width : 100%;
-    height : calc(100% - var(--control-box-height));
+    height : calc(100% - 50px);
+    position : relative;
 }
 
 
 .control-box {
-    /* TODO: make elements vertically centered */
     width : 100%;
-    height : calc(var(--control-box-height) - 10px);
+    height : 40px;
     background-color : #4b7360;
-    display : block;
+    position : absolute;
+    bottom : 0;
     padding : 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .remove-plot-button {
@@ -100,7 +100,6 @@ code {
     height : 36px;
     background: url("img/ic_clear_white_36dp_1x.png") no-repeat center;
     border : none;
-    display : block;
     cursor : hand;
     cursor : pointer;
 }
