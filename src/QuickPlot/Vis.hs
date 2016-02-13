@@ -92,9 +92,9 @@ instance ToJSON VisJSON where
 
 instance ToJSON VisPlotType where
     toJSON Network  = String "network"
-    toJSON Timeline = String "timeline"
-    toJSON Graph2D  = String "graph2d"
-    toJSON Graph3D  = String "graph3d"
+    -- toJSON Timeline = String "timeline"
+    -- toJSON Graph2D  = String "graph2d"
+    -- toJSON Graph3D  = String "graph3d"
 
 instance Lift VisJSON where
     lift (VisJSON value) = [| VisJSON value |]
