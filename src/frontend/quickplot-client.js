@@ -13,7 +13,7 @@
 var websocketURL = "ws://127.0.0.1:8000/ws";
 var websocket;
 
-// connectToWebsocket(websocketURL);
+connectToWebsocket(websocketURL);
 
 /**
  * Connect to the QuickPlot websocket server
@@ -124,9 +124,6 @@ $("#plots").on("resizestop", function(event, ui) {
         width : plotBox.offsetWidth,
         height : (plotBox.offsetHeight - DEFAULT_PLOT_SETTINGS.controlBoxHeight)
     };
-
-    console.log("Default box height", DEFAULT_PLOT_SETTINGS.controlBoxHeight);
-    console.log("plotBoxOffset", newSize.height);
 
     // e.g. plotly_name_id
     switch (gridStackItem.id.split("_")[0]) {
