@@ -27,10 +27,8 @@ import Data.Text
 type VisData = VisJSON
 type VisOptions = VisJSON
 
+-- | Only Network graphs work
 data VisPlotType = Network
-                 | Timeline
-                 | Graph2D
-                 | Graph3D
                  deriving Show
 
 

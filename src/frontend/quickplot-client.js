@@ -55,7 +55,7 @@ var LIBRARIES = {
 }
 
 var DEFAULT_PLOT_SETTINGS = {
-    sizeX : 8,
+    sizeX : 12, // full width
     sizeY : 6,
     controlBoxHeight : 50
 };
@@ -67,7 +67,8 @@ var gridStackOptions = {
     animate : true,
     resizable : {
         handles : 'e, se, s, w, nw, n, ne'
-    }
+    },
+    handle : ".control-box"
 };
 
 
