@@ -21,7 +21,11 @@ QuickPlot was designed to make interactive data exploration easier. So the follo
 
 **0. Install QuickPlot**
 
-At the moment just manually.
+````haskell
+stack install QuickPlot
+cabal install QuickPlot
+-- or manually
+````
 
 **1. Import QuickPlot**
 
