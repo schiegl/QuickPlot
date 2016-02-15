@@ -5,6 +5,8 @@
 module QuickPlot.Plotly (
       plotly
     , PlotlyJSON (..)
+    , PlotlyData
+    , PlotlyLayout
 ) where
 
 import QuickPlot
@@ -16,26 +18,30 @@ import Language.Haskell.TH.Quote
 import Data.Aeson hiding (json)
 
 
-instance Plottable PlotlyJSON where
+type PlotlyData = PlotlyJSON
+type PlotlyLayout = PlotlyJSON
+
+
+instance Plottable PlotlyData where
     plottableToJSON (PlotlyJSON trace) = [json|{
                                     data : [ #{ trace } ]
                                 }|]
     whichLibrary _ = Plotly
 
-instance Plottable [PlotlyJSON] where
+instance Plottable [PlotlyData] where
     plottableToJSON traces = [json|{
                         data : #{ traces }
                     }|]
     whichLibrary _ = Plotly
 
-instance Plottable (PlotlyJSON, PlotlyJSON) where
+instance Plottable (PlotlyData, PlotlyLayout) where
     plottableToJSON (traces, layout) = [json|{
                                   data : [ #{ traces } ]
                                 , layout : #{ layout }
                               }|]
     whichLibrary _ = Plotly
 
-instance Plottable ([PlotlyJSON], PlotlyJSON) where
+instance Plottable ([PlotlyData], PlotlyLayout) where
     plottableToJSON (traces, layout) = [json|{
                                   data : #{ traces }
                                 , layout : #{ layout }
