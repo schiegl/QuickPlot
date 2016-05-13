@@ -4,6 +4,9 @@
 
 
 
+**This project is no longer maintained**
+
+Since the demand of data visualization has been getting bigger many language agnostic libraries popped up. It would be much more efficient to just write clients for their visualization servers.
 
 How does it work?
 ----------------
