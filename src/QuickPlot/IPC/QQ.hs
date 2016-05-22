@@ -11,7 +11,7 @@ import qualified Data.Vector as V
 import qualified Data.Text as T
 import           Data.Aeson hiding (json)
 import           QuickPlot.IPC.QQParser
-
+--import           Data.Aeson.Types
 
 json :: QuasiQuoter
 json = QuasiQuoter { quoteExp  = jsonExp
@@ -27,8 +27,8 @@ jsonExp string =
         Right val -> [| val |]
 
 
-instance Lift Value where
-    lift value = [| value |]
+--instance Lift Value where
+--    lift value = [| value |]
 
 
 instance Lift JSONValue where
