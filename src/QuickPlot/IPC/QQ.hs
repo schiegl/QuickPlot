@@ -12,7 +12,6 @@ import qualified Data.Text as T
 import           Data.Aeson hiding (json)
 import           QuickPlot.IPC.QQParser
 
-
 json :: QuasiQuoter
 json = QuasiQuoter { quoteExp  = jsonExp
                    , quotePat  = const $ error "No quotePat defined for jsonQQ"
@@ -25,10 +24,6 @@ jsonExp string =
     case parseTHJSON string of
         Left err  -> error $ "JSON is invalid: " ++ show err
         Right val -> [| val |]
-
-
-instance Lift Value where
-    lift value = [| value |]
 
 
 instance Lift JSONValue where

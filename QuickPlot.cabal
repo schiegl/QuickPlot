@@ -1,5 +1,5 @@
 name:                QuickPlot
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            Quick and easy data visualization with Haskell
 description:         Please see README.md
 homepage:            http://github.com/tepf/QuickPlot#readme
@@ -26,7 +26,7 @@ library
                        , QuickPlot.Plotly
                        , QuickPlot.Vis
     build-depends:       base >= 4.7 && < 5
-                       , aeson >= 0.9.0.1
+                       , aeson >= 0.11.2.0
                        , bytestring >= 0.10.6
                        , text >= 1.2.2
                        , snap >= 0.14.0.6
